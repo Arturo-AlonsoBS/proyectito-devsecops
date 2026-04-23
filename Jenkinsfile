@@ -29,24 +29,19 @@ pipeline {
             }
         }
 
-        stage('Dependency Analysis') {
-            steps {
-                echo "Analizando dependencias..."
-                sh '''
-                    npm install
-                    npm audit --audit-level=moderate || EXIT_CODE=$?
-                    if [ $EXIT_CODE -eq 1 ]; then
-                        echo "ERROR: Vulnerabilidades en dependencias"
-                        exit 1
-                    fi
-                '''
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 echo "Building Docker image..."
                 sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+            }
+        }
+
+        stage('Dependency Analysis') {
+            steps {
+                echo "Analizando dependencias con npm audit..."
+                sh '''
+                    docker run --rm ${IMAGE_NAME}:${IMAGE_TAG} npm audit --audit-level=moderate
+                '''
             }
         }
 
