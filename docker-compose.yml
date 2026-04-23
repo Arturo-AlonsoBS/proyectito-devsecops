@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Nexus Repository Manager - Para almacenar artefactos e imágenes Docker
+  nexus:
+    image: sonatype/nexus3:latest
+    container_name: nexus-devsecops
+    restart: unless-stopped
+    environment:
+      - NEXUS_CONTEXT=nexus
+    volumes:
+      - nexus-data:/nexus-data
+    ports:
+      - "8081:8081"    # UI de Nexus
+      - "8082:8082"    # Docker Registry (hosted)
+      - "8083:8083"    # Docker Registry (proxy)
+    networks:
+      - DEVOPS_NET
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/service/metrics/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Jenkins - Para orquestar el pipeline CI/CD
+  jenkins-curso:
+    image: docker.io/mguazzardo/pipe-seg
+    container_name: jenkins-devsecops
+    restart: unless-stopped
+    privileged: true
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker  # Acceso a docker CLI
+    ports:
+      - "8080:8080"    # Jenkins UI
+      - "50000:50000"  # Jenkins agentes
+    networks:
+      - DEVOPS_NET
+    depends_on:
+      nexus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  nexus-data:
+    driver: local
+  jenkins-data:
+    driver: local
+
+networks:
+  DEVOPS_NET:
+    driver: bridge
