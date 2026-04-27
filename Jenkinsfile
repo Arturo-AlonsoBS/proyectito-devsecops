@@ -7,14 +7,14 @@ pipeline {
     }
 
     environment {
-        NEXUS_HOST = "nexus"
+        NEXUS_HOST = "host.docker.internal"
         NEXUS_PORT = "8081"
-        NEXUS_URL = "http://${NEXUS_HOST}:${NEXUS_PORT}"
+        NEXUS_URL = "http://${NEXUS_HOST}:${NEXUS_PORT}/nexus"
         NEXUS_REPO = "docker-dev"
         
         IMAGE_NAME = "webapp"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        DOCKER_REGISTRY = "${NEXUS_HOST}:8082"
+        DOCKER_REGISTRY = "host.docker.internal:8082"
         IMAGE_FULL_NAME = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
         IMAGE_LATEST = "${DOCKER_REGISTRY}/${IMAGE_NAME}:latest"
         
